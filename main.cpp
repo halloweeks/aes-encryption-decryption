@@ -22,10 +22,16 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 	int len, fin, fout;
 	
 	// Open the input file in read-only mode and assign the file descriptor to 'fin'
-	fin = open(in, O_RDONLY);
+	if ((fin = open(in, O_RDONLY)) == -1) {
+		fprintf(stderr, "Error unable to open input file %s\n", in);
+		exit(1);
+	}
 	
 	// Open the output file with write, create, and truncate flags, and assign the file descriptor to 'fout'
-	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if ((fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+		fprintf(stderr, "Error unable to open output file %s\n", out);
+		exit(1);
+	}
 	
 	// Generate random IV (Initialization Vector)
 	RAND_bytes(iv, BLOCK_SIZE);
@@ -34,7 +40,10 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 	Encrypt aes(key, iv);
 	
 	// Write IV to the output file
-	write(fout, &iv, sizeof(iv));
+	if (write(fout, &iv, BLOCK_SIZE) == -1) {
+		fprintf(stderr, "Error unable to write output file %s\n", out);
+		exit(1);
+	}
 	
 	// Read data from the input file into the 'chunk' buffer until the end of file is reached
 	while ((len = read(fin, chunk, CHUNK_SIZE)) > 0) {
@@ -42,7 +51,10 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 		// The encrypted data is stored in the 'temp' buffer, and the length of the encrypted data is assigned to 'len'
 		len = aes.update(chunk, len, temp);
 		// Write the encrypted data from the 'temp' buffer to the output file descriptor 'fout'
-		write(fout, temp, len);
+		if (write(fout, temp, len) == -1) {
+			fprintf(stderr, "Error unable to write output file %s\n", out);
+			exit(1);
+		}
     }
     
     // Perform the final encryption operation and store the encrypted data in the 'temp' buffer
@@ -50,7 +62,10 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
     len = aes.final(temp);
     
     // Write the final encrypted data from the 'temp' buffer to the output file descriptor 'fout'
-    write(fout, temp, len);
+    if (write(fout, temp, len) == -1) {
+    	fprintf(stderr, "Error unable to write output file %s\n", out);
+		exit(1);
+    }
     
     // Close the input and output file descriptors
     close(fin);
@@ -71,13 +86,27 @@ void test_decrypt(const uint8_t *key, const char* in, const char* out) {
 	int len, fin, fout;
 	
 	// Open the input file in read-only mode and assign the file descriptor to 'fin'
-	fin = open(in, O_RDONLY);
+	if ((fin = open(in, O_RDONLY)) == -1) {
+		fprintf(stderr, "Error opening input file %s\n", in);
+		exit(1);
+	}
 	
 	// Open the output file with write, create, and truncate flags, and assign the file descriptor to 'fout'
-	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if ((fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+		fprintf(stderr, "Error opening output file %s\n", out);
+		exit(1);
+	}
 	
 	// Read the Initialization Vector (IV) from the input file descriptor 'fin' into the 'iv' buffer
-	read(fin, iv, sizeof(iv));
+	len = read(fin, iv, BLOCK_SIZE);
+	
+	if (len == -1) {
+		fprintf(stderr, "Error reading IV from input file");
+		exit(1);
+	} else if (len < BLOCK_SIZE) {
+		fprintf(stderr, "Incomplete IV: Expected %zu bytes, read %d bytes\n", BLOCK_SIZE, len);
+		exit(1);
+	}
 	
 	// Create an AES decryption object 'aes' with the provided decryption key 'key' and initialization vector 'iv'
 	Decrypt aes(key, iv);
@@ -88,7 +117,10 @@ void test_decrypt(const uint8_t *key, const char* in, const char* out) {
 		// The decrypted data is stored in the 'temp' buffer, and the length of the decrypted data is assigned to 'len'
 		len = aes.update(chunk, len, temp);
 		// Write the decrypted data from the 'temp' buffer to the output file descriptor 'fout'
-		write(fout, temp, len);
+		if (write(fout, temp, len) == -1) {
+			fprintf(stderr, "Error writing output file %s\n", out);
+			exit(1);
+		}
 	}
 	
 	// Perform the final decryption operation and store the decrypted data in the 'temp' buffer
@@ -96,7 +128,9 @@ void test_decrypt(const uint8_t *key, const char* in, const char* out) {
     len = aes.final(temp);
     
     // Write the final decrypted data from the 'temp' buffer to the output file descriptor 'fout'
-    write(fout, temp, len);
+    if (write(fout, temp, len) == -1) {
+    	fprintf(stderr, "Error writing output file %s\n", out);
+    }
     
     // Close the input and output file descriptors
     close(fin);
