@@ -6,7 +6,7 @@
 
 static const size_t KEY_SIZE = 256 / 8;
 static const size_t BLOCK_SIZE = 128 / 8;
-static const size_t CHUNK_SIZE = 1024 * 16;
+static const size_t CHUNK_SIZE = 1024;
 
 void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 	// Initialization Vector (IV) for encryption
@@ -28,7 +28,7 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	
 	// Generate random IV (Initialization Vector)
-	RAND_bytes(iv, sizeof(iv));
+	RAND_bytes(iv, BLOCK_SIZE);
 	
 	// Create an AES encryption object 'aes' with the provided encryption key 'key' and initialization vector 'iv'
 	Encrypt aes(key, iv);
@@ -70,14 +70,14 @@ void test_decrypt(const uint8_t *key, const char* in, const char* out) {
 	// Length variable, input and output file descriptors
 	int len, fin, fout;
 	
-	// Read the Initialization Vector (IV) from the input file descriptor 'fin' into the 'iv' buffer
-	read(fin, iv, sizeof(iv));
-	
 	// Open the input file in read-only mode and assign the file descriptor to 'fin'
 	fin = open(in, O_RDONLY);
 	
 	// Open the output file with write, create, and truncate flags, and assign the file descriptor to 'fout'
 	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	
+	// Read the Initialization Vector (IV) from the input file descriptor 'fin' into the 'iv' buffer
+	read(fin, iv, sizeof(iv));
 	
 	// Create an AES decryption object 'aes' with the provided decryption key 'key' and initialization vector 'iv'
 	Decrypt aes(key, iv);
