@@ -25,7 +25,7 @@ void test_encrypt(const uint8_t *key, const char* in, const char* out) {
 	fin = open(in, O_RDONLY);
 	
 	// Open the output file with write, create, and truncate flags, and assign the file descriptor to 'fout'
-	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 644);
+	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC);
 	
 	// Generate random IV (Initialization Vector)
 	RAND_bytes(iv, sizeof(iv));
@@ -77,7 +77,7 @@ void test_decrypt(const uint8_t *key, const char* in, const char* out) {
 	fin = open(in, O_RDONLY);
 	
 	// Open the output file with write, create, and truncate flags, and assign the file descriptor to 'fout'
-	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC, 644);
+	fout = open(out, O_WRONLY | O_CREAT | O_TRUNC);
 	
 	// Create an AES decryption object 'aes' with the provided decryption key 'key' and initialization vector 'iv'
 	Decrypt aes(key, iv);
