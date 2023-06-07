@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include "aes.hpp"
 
-static const size_t KEY_SIZE = 256 / 8;
-static const size_t BLOCK_SIZE = 128 / 8;
+static const size_t KEY_SIZE = 32;
+static const size_t BLOCK_SIZE = 16;
 static const size_t CHUNK_SIZE = 1024;
 
 void test_encrypt(const uint8_t *key, const char* in, const char* out) {
